@@ -24,7 +24,7 @@ int map_insert(map_s *map, const char *key, void *value) {
 	map_record_s **prec = &map->table[pjw_hash(key)],
 	*rec = *prec,
 	*nrec;
-	nrec = sa_alloc(sizeof *nrec);
+	nrec = ge_alloc(sizeof *nrec);
 	nrec->key = key;
 	nrec->value = value;
 	nrec->next = NULL;
@@ -98,7 +98,7 @@ void map_dealloc(map_s *map) {
 }
 
 void buf_init(buf_s *buf) {
-	buf->data = sa_alloc(INITIAL_BUF_SIZE);
+	buf->data = ge_alloc(INITIAL_BUF_SIZE);
 	buf->bsize = INITIAL_BUF_SIZE;
 	buf->size = 0;
 }
@@ -108,7 +108,7 @@ void buf_add_char(buf_s *buf, char c) {
 
 	if(buf->size == buf->bsize) {
 		buf->bsize *= 2;
-		buf->data = sa_ralloc(buf->data, buf->bsize);
+		buf->data = ge_ralloc(buf->data, buf->bsize);
 	}
 	raw = buf->data;
 	raw[buf->size++] = c;
@@ -121,7 +121,7 @@ void buf_add_int(buf_s *buf, int i) {
 
 	if(new_size >= buf->bsize) {
 		buf->bsize *= 2;
-		buf->data = sa_ralloc(buf->data, buf->bsize); 
+		buf->data = ge_ralloc(buf->data, buf->bsize); 
 	}
 	raw = buf->data;
 	raw[buf->size++] = i;

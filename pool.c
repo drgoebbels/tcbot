@@ -36,7 +36,7 @@ pool_s *pool_init(int nthreads) {
 	pool_s *pool;
 	core_s *core;
 
-	pool = sa_alloc(sizeof(*pool) + nthreads*sizeof(*pool->cores));
+	pool = ge_alloc(sizeof(*pool) + nthreads*sizeof(*pool->cores));
 	pool->state = POOL_STATE_ACTIVE;
 	pool->head = NULL;
 	pool->tail = NULL;
@@ -73,7 +73,7 @@ pool_task_s *pool_task_create(pool_s *pool, void *(*f)(void *), void *arg, bool 
 	if(pool->state != POOL_STATE_ACTIVE) {
 		return NULL;
 	}
-	t = sa_alloc(sizeof *t);
+	t = ge_alloc(sizeof *t);
 	t->isindependent = isindependent;
 	t->isfinished = false;
 	t->result = NULL;
