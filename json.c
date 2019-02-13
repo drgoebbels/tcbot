@@ -1,5 +1,6 @@
 #include "json.h"
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 typedef enum jtok_type_e jtok_type_e;
@@ -31,9 +32,9 @@ static int lex(jtok_s *t, char **ptr);
 static void jtok_make(jtok_s *t, char *lex, size_t len, jtok_type_e type);
 
 static jnode_s *jparse_value(char **ptr);
-static jnode_s *jparse_object(char **ptr);
-static jnode_s *jparse_array(char **ptr);
-static jnode_s *jparse_string(jtok_s *str);
+static jobject_s *jparse_object(char **ptr);
+static jarray_s *jparse_array(char **ptr);
+static jstring_s *jparse_string(jtok_s *str);
 static jnode_s *jparse_number(jtok_s *num);
 static jnode_s *jparse_true(jtok_s *tval);
 static jnode_s *jparse_false(jtok_s *fval);
@@ -79,6 +80,12 @@ int lex(jtok_s *t, char **src) {
 				*src = fptr + 1;
 				jtok_make(t, fptr, 1, JTOK_COLON);
 				return 0;
+			case '"':
+				bptr = fptr++;
+				while(*fptr != '"') //TODO: support unicode
+					fptr++;
+				jtok_make(t, fptr, fptr-bptr, JTOK_STRING);
+				break;
 			default:
 				if(isdigit(*fptr) || *fptr == '-' || *fptr == '+') {
 					if(!isdigit(*(fptr + 1)) && *fptr == '-' || *fptr == '+') {
@@ -119,23 +126,26 @@ jnode_s *jparse_value(char **ptr) {
 	lex(&t, ptr);
 	switch(t.type) {
 		case JTOK_LBRACE:
-			n = jparse_object(ptr);
+			n = (jnode_s *)jparse_object(ptr);
 			break;
 		case JTOK_LBRACKET:
-			n = jparse_array(ptr);
+			n = (jnode_s *)jparse_array(ptr);
 			break;
 		case JTOK_STRING:
-			n = jparse_string(&t);	
+			n = (jnode_s *)jparse_string(&t);	
 			break;
 	}
 	return n;
 }
 
-jnode_s *jparse_object(char **ptr) {
+jobject_s *jparse_object(char **ptr) {
 	jtok_s t;
 	jtok_s *key;
 	jnode_s *node;
 
+	jobject_s *object = ge_alloc(sizeof *object);
+	
+	map_init(&object->table);
 	lex(&t, ptr);
 	if(t.type == JTOK_STRING) {
 		//key = t;
@@ -147,14 +157,24 @@ jnode_s *jparse_object(char **ptr) {
 	else {
 		return NULL;
 	}
-	return node;
+	return object;
 }
 
-jnode_s *jparse_array(char **ptr) {
+jarray_s *jparse_array(char **ptr) {
+	return NULL;
 }
 
-jnode_s *jparse_string(jtok_s *ptr) {
-	
+jstring_s *jparse_string(jtok_s *t) {
+	char bck, *ptr;
+	jstring_s *n = ge_alloc(sizeof(*n) + t->len);
+
+	n->base.type = JNODE_STRING; 
+	ptr = &t->lex[t->len];
+	bck = *ptr;
+	*ptr = '\0';
+	strcpy(n->data, t->lex);
+	*ptr = bck;
+	return n;
 }
 
 jnode_s *jparse_number(jtok_s *num) {
